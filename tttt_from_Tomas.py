@@ -26,7 +26,10 @@ def getotherplayer(player):
 
 # this function is used to find an index to the after-state value table V(s)
 def hashit(board):
+    print('board', board)
     base3 = np.matmul(np.power(3, range(0, 9)), board.transpose())
+    print('base3', int(base3))
+    print('hashit', int(base3))
     return int(base3)
 
 # the usual epsilon greedy policy

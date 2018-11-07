@@ -129,7 +129,6 @@ def legal_moves(board, dice, player):
 
     # try using the first dice, then the second dice
     possible_first_moves = legal_move(board, dice[0], player)
-    print("possible_firsT_moves",possible_first_moves)
     for m1 in possible_first_moves:
         temp_board = update_board(board,m1,player)
         possible_second_moves = legal_move(temp_board,dice[1], player)
@@ -231,7 +230,7 @@ def play_a_game(commentary = False):
             
             # if you're playing using dyna2 vs random agent: 
             if player == 1:
-                move = neural_network_sigrun.action(board_copy,dice,player,i)
+                move = agent.action(board_copy,dice,player,i)
             elif player == -1:
                 move = random_agent(board_copy,dice,player,i) 
             
@@ -253,7 +252,7 @@ def play_a_game(commentary = False):
 
 def main():
     winners = {}; winners["1"]=0; winners["-1"]=0; # Collecting stats of the games
-    nGames = 100 # how many games?
+    nGames = 10 # how many games?
     for g in range(nGames):
         winner = play_a_game(commentary=True)
         winners[str(winner)] += 1
