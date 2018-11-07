@@ -9,9 +9,8 @@ Feel free to change this file as you wish but you will only submit your agent
 so make sure your changes here won't affect his performance.
 """
 import numpy as np
-import agent
+#import agent
 import dyna2
-import neural_network_agent_sigrun
 # import flipped_agent 
 
 def init_board():
@@ -163,6 +162,7 @@ def legal_moves(board, dice, player):
     return moves, boards 
 
 def update_board(board, move, player):
+    print('move in update board', move)
     # updates the board
     # inputs are some board, one move and the player
     # outputs the updated board
@@ -175,6 +175,7 @@ def update_board(board, move, player):
         
         # moving the dead piece if the move kills a piece
         kill = board_to_update[endPip]==(-1*player)
+        print('kill?',kill)
         if kill:
             board_to_update[endPip] = 0
             jail = 25+(player==1)
