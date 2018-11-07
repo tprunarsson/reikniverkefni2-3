@@ -10,6 +10,8 @@ so make sure your changes here won't affect his performance.
 """
 import numpy as np
 import agent
+import dyna2
+import neural_network_agent_sigrun
 # import flipped_agent 
 
 def init_board():
@@ -127,6 +129,7 @@ def legal_moves(board, dice, player):
 
     # try using the first dice, then the second dice
     possible_first_moves = legal_move(board, dice[0], player)
+    print("possible_firsT_moves",possible_first_moves)
     for m1 in possible_first_moves:
         temp_board = update_board(board,m1,player)
         possible_second_moves = legal_move(temp_board,dice[1], player)
@@ -218,13 +221,19 @@ def play_a_game(commentary = False):
             board_copy = np.copy(board) 
 
             # make the move (agent vs agent):
-            move = agent.action(board_copy,dice,player,i) 
+#             move = agent.action(board_copy,dice,player,i) 
             
             # if you're playing vs random agent:
 #            if player == 1:
 #                move = agent.action(board_copy,dice,player,i)
 #            elif player == -1:
 #                move = random_agent(board_copy,dice,player,i) 
+            
+            # if you're playing using dyna2 vs random agent: 
+            if player == 1:
+                move = neural_network_sigrun.action(board_copy,dice,player,i)
+            elif player == -1:
+                move = random_agent(board_copy,dice,player,i) 
             
             # update the board
             if len(move) != 0:
@@ -246,7 +255,7 @@ def main():
     winners = {}; winners["1"]=0; winners["-1"]=0; # Collecting stats of the games
     nGames = 100 # how many games?
     for g in range(nGames):
-        winner = play_a_game(commentary=False)
+        winner = play_a_game(commentary=True)
         winners[str(winner)] += 1
     print("Out of", nGames, "games,")
     print("player", 1, "won", winners["1"],"times and")
