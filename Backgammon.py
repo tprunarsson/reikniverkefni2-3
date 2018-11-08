@@ -162,7 +162,6 @@ def legal_moves(board, dice, player):
     return moves, boards 
 
 def update_board(board, move, player):
-    print('move in update board', move)
     # updates the board
     # inputs are some board, one move and the player
     # outputs the updated board
@@ -175,7 +174,6 @@ def update_board(board, move, player):
         
         # moving the dead piece if the move kills a piece
         kill = board_to_update[endPip]==(-1*player)
-        print('kill?',kill)
         if kill:
             board_to_update[endPip] = 0
             jail = 25+(player==1)

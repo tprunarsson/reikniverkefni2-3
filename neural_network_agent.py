@@ -76,10 +76,7 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
             else: # this one is using the neural-network to approximate the after-state value
                 action = epsilon_nn_greedy(np.copy(board), dice, player, epsilon, w1, b1, w2, b2)
             # perform move and update board
-            print('action', action)
             for i in range(0,len(action)):
-                print('action', action)
-                print('action[i]', action[i])
                 board = Backgammon.update_board(board, action[i], player)
             if (1 == Backgammon.game_over(board)): # has this player won?
                 winner = player
@@ -147,7 +144,10 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
         delta = (1.0 - reward) + gamma * 0 - V[sold]
         E = np.append(E,1) # add one to the trace (recall unique states)
         S.append(sold)
-        V[S] = V[S] + delta * alpha * E
+
+        for state in S:
+            #          print('V[state]',V[state])
+            V[state] = V[state] + delta * alpha * E
         # and then for the neural network:
         h = torch.mm(w1,xold) + b1 # matrix-multiply x with input weight w1 and add bias
         h_sigmoid = h.sigmoid() # squash this with a sigmoid function
@@ -195,7 +195,7 @@ b2 = Variable(torch.zeros((1,1), device = device, dtype=torch.float), requires_g
 # now perform the actual training and display the computation time
 import time
 start = time.time()
-training_steps = 40000
+training_steps = 10000
 learnit(training_steps, epsilon, lam, alpha, V, alpha1, alpha2, w1, b2, w2, b2)
 end = time.time()
 print(end - start)

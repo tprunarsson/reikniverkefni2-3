@@ -26,10 +26,7 @@ def getotherplayer(player):
 
 # this function is used to find an index to the after-state value table V(s)
 def hashit(board):
-    print('board', board)
     base3 = np.matmul(np.power(3, range(0, 9)), board.transpose())
-    print('base3', int(base3))
-    print('hashit', int(base3))
     return int(base3)
 
 # the usual epsilon greedy policy
@@ -112,6 +109,8 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
                     delta = 0 + gamma * V[s] - V[sold]
                     E = np.append(E,1) # add trace to this state (note all new states are unique else we would +1)
                     S.append(sold)     # keep track of this state also
+                    print('S',S)
+                    print('V[S]',V[S])
                     V[S] = V[S] + delta * alpha * E # the usual tabular TD(lambda) update
                     E = gamma * lam * E
                 else: # here we have player 2 updating the neural-network (2 layer feed forward with Sigmoid units)
