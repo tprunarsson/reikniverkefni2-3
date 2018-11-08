@@ -51,11 +51,12 @@ def actor_policy_forward(x, w1, b1, w2, b2):
     p_sigmoid = logp.sigmoid()
     return p_sigmoid, h #probability of taking action and the hidden state
 
+#vandamál, er með 3D argument en en þessar aðgerðir taka bara 1D argument
 def actor_policy_backward(epx, eph, eplogp, w2):
-    dW2 = np.dot(eph.T, eplogp).ravel()
-    dh = np.outer(eplogp, w2)
-    dh[eph <= 0] = 0
-    dW1 = np.dot(dh.T, epx)
+    dW2 = torch.dot(eph, eplogp)
+    dh = torch.ger(eplogp, w2)
+    dh[eph <= 0] = 0 # backpro prelu
+    dW1 = torch.dot(dh.transpose(0,1), epx)
     return {'w1':dW1, 'w2': dW2}
 
 
@@ -83,16 +84,6 @@ def epsilon_nn_greedy(board, dice, player, epsilon, w1, b1, w2, b2, debug = Fals
         va[i] = y.sigmoid()
     return possible_moves[np.argmax(va)]
 
-def discount_reward(r):
-    global gamma
-    discounted_r = np.zeros_like(r)
-    running_add = 0
-    for t in reversed(range(0, r.size)):
-        if r[t] != 0: 
-            running_add = 0 #resetting sum
-        running_add = running_add * gamma + r[t]
-        discounted_r[t] = running_add
-        return discounted_r
 
 def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
     gamma = 1 # for completeness
@@ -186,35 +177,35 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
             reward = 1
         else:
             reward = 0.5
+        
+        
             
-        if(Backgammon.game_over(board)):
-            episode_number += 1
-            end_x = np.vstack(xs)
-            end_h = np.vstack(hs)
-            end_logProp = np.vstack(logProp)
-            epr = np.vstack(reward)
-            xs, hs, logProp = [], [], []
+        episode_number += 1
+        
+        end_x = torch.stack(xs)
+        end_h = torch.stack(hs)
+        end_logProp = torch.stack(logProp)
+        
+        xs, hs, logProp = [], [], []
+        
+        #spurning hvernig reward er gefið, hvort það þurfi að taka einhversskonar discount
+        end_logProp *= reward
             
-            discounted_epr = discount_reward(epr)
-            #standarize the discounted reward
+        grad = actor_policy_backward(end_x, end_h, end_logProp, w2)
             
-            discounted_epr -= np.mean(discounted_epr)
-            discounted_epr /= np.std(discounted_epr)
-            end_logProp *= discounted_epr
-            
-            grad = actor_policy_backward(end_x, end_h, end_logProp, w2)
-            
-            for k in model: 
-                grad_buffer[k] += grad[k] #adding the grad to the batch
+        for k in model: 
+            grad_buffer[k] += grad[k] #adding the grad to the batch
                 
-            if episode_number % batch_size == 0:
-                episode_number = 0
-                for k, v in model.items():
-                    g = grad_buffer[k]
-                    rmsprop_cache[k] = decay_rate * rmsprop_cache[k] + (1 - decay_rate ) * np.power(g, 2)
-                    model[k] += learning_rate * g/np.sqrt(rmsprop_cache[k] + 1e-5)
-                    grad_buffer[k] = np.zeros_like(v)
-            
+        if episode_number == batch_size:
+            episode_number = 0
+            for k, v in model.items():
+                g = grad_buffer[k]
+                rmsprop_cache[k] = decay_rate * rmsprop_cache[k] + (1 - decay_rate ) * np.power(g, 2)
+                model[k] += learning_rate * g/np.sqrt(rmsprop_cache[k] + 1e-5)
+                print('model[k]', model[k])
+                print('model', model)
+                grad_buffer[k] = np.zeros_like(v)
+        
         # Now we perform the final update (terminal after-state value is zero)
         # these are basically the same updates as in the inner loop but for the final-after-states (sold and xold)
         # first for the table (note if reward is 0 this player actually won!):
@@ -275,16 +266,16 @@ start = time.time()
 training_steps = 10000
 learnit(training_steps, epsilon, lam, alpha, V, alpha1, alpha2, w1, b2, w2, b2)
 end = time.time()
-print(end - start)
+#print(end - start)
 
 torch.save(w1, './w1_trained.pth')
 torch.save(w1, './w2_trained.pth')
 torch.save(b1, './b1_trained.pth')
 torch.save(b2, './b2_trained.pth')
-print('w1 from file',torch.load('./w1_trained.pth', map_location=lambda storage, loc: storage))
-print('w2 from file',torch.load('./w2_trained.pth', map_location=lambda storage, loc: storage))
-print('b1 from file',torch.load('./b1_trained.pth', map_location=lambda storage, loc: storage))
-print('b2 from file',torch.load('./b2_trained.pth', map_location=lambda storage, loc: storage))
+#print('w1 from file',torch.load('./w1_trained.pth', map_location=lambda storage, loc: storage))
+#print('w2 from file',torch.load('./w2_trained.pth', map_location=lambda storage, loc: storage))
+#print('b1 from file',torch.load('./b1_trained.pth', map_location=lambda storage, loc: storage))
+#print('b2 from file',torch.load('./b2_trained.pth', map_location=lambda storage, loc: storage))
 
 
 def action(board_copy,dice,player,i):
