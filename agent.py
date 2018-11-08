@@ -28,6 +28,10 @@ def action(board_copy,dice,player,i):
     #
     #
     #
+    w1 = torch.load('./w1_trained.pth', map_location=lambda storage, loc: storage)
+    w2 = torch.load('./w2_trained.pth', map_location=lambda storage, loc: storage)
+    b1 = torch.load('./b1_trained.pth', map_location=lambda storage, loc: storage)
+    b2 = torch.load('./b2_trained.pth', map_location=lambda storage, loc: storage)
     move = neural_network_agent.epsilon_nn_greedy(np.copy(board), player, epsilon, w1, b1, w2, b2, debug)
 
     return move

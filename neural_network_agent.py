@@ -9,7 +9,7 @@ import numpy as np
 from collections import defaultdict
 import torch 
 from torch.autograd import Variable
-import Backgammon
+#import Backgammon
 
 
 # this function is used to find an index to the after-state value table V(s)
@@ -146,7 +146,6 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
         S.append(sold)
 
         for state in S:
-            #          print('V[state]',V[state])
             V[state] = V[state] + delta * alpha * E
         # and then for the neural network:
         h = torch.mm(w1,xold) + b1 # matrix-multiply x with input weight w1 and add bias
@@ -178,6 +177,7 @@ device = torch.device('cpu')
 # device = torch.device('cuda') 
 
 V = defaultdict(int) 
+print('V before', V)
 
 alpha = 0.01 # step size for tabular learning
 alpha1 = 0.01 # step sizes using for the neural network (first layer)
@@ -200,6 +200,16 @@ learnit(training_steps, epsilon, lam, alpha, V, alpha1, alpha2, w1, b2, w2, b2)
 end = time.time()
 print(end - start)
 
+torch.save(w1, './w1_trained.pth')
+torch.save(w1, './w2_trained.pth')
+torch.save(b1, './b1_trained.pth')
+torch.save(b2, './b2_trained.pth')
+print('w1 from file',torch.load('./w1_trained.pth', map_location=lambda storage, loc: storage))
+print('w2 from file',torch.load('./w2_trained.pth', map_location=lambda storage, loc: storage))
+print('b1 from file',torch.load('./b1_trained.pth', map_location=lambda storage, loc: storage))
+print('b2 from file',torch.load('./b2_trained.pth', map_location=lambda storage, loc: storage))
+
+
 def action(board_copy,dice,player,i):
     # the champion to be
     # inputs are the board, the dice and which player is to move
@@ -220,6 +230,6 @@ def action(board_copy,dice,player,i):
     #
     #
     #
-    move = epsilon_nn_greedy(np.copy(board), player, epsilon, w1, b1, w2, b2, debug)
+    move = epsilon_nn_greedy(board_copy, player, epsilon, w1, b1, w2, b2, debug)
 
     return move
