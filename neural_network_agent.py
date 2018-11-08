@@ -9,13 +9,29 @@ import numpy as np
 from collections import defaultdict
 import torch 
 from torch.autograd import Variable
-#import Backgammon
+import Backgammon
 
-
+xs, hs, logProp = [], [], []
+#ath bæta við því sem model hefur lært í næstu umferð 
+model = {}
+#starting at 1 updating the model after every episode
+#this is an open issue
+batch_size = 1 # number of episodes we play before updating the model
+##discount factor of reward, going to start at zero because we only get a reward at the end
+#this is an open issue
+grad_buffer = {k: np.zeros_like(v) for k,v in model.items()}
+rmsprop_cache = { k: np.zeros_like(v) for k, v in model.items() }
+learning_rate = 1e-4 #changeble
+episode_number = 0
+decay_rate = 0.5 #changeble
 # this function is used to find an index to the after-state value table V(s)
 def hash_it(board_copy):
     base31 = np.matmul(np.power(31, range(0, 29)), board_copy.transpose())
     return int(base31)
+
+#sigmoid function
+def sigmoid(x):
+    return 1.0/(1.0 + np.exp(-x))
 
 def one_hot_encoding(board):
     oneHot = np.zeros(28*6*2)
@@ -27,6 +43,20 @@ def one_hot_encoding(board):
             oneHot[28 * (i-1) + (np.where( board > i)[0] )-1] = 1
             oneHot[28*6 + 28 * (i-1) + (np.where( board < -i)[0] )-1] = 1
     return oneHot
+
+def actor_policy_forward(x, w1, b1, w2, b2):
+    h = torch.mm(w1, x) + b1
+    h[h<0] = 0
+    logp = torch.mm(w2, h) + b2
+    p_sigmoid = logp.sigmoid()
+    return p_sigmoid, h #probability of taking action and the hidden state
+
+def actor_policy_backward(epx, eph, eplogp, w2):
+    dW2 = np.dot(eph.T, eplogp).ravel()
+    dh = np.outer(eplogp, w2)
+    dh[eph <= 0] = 0
+    dW1 = np.dot(dh.T, epx)
+    return {'w1':dW1, 'w2': dW2}
 
 
 # this epsilon greedy policy uses a feed-forward neural network to approximate the after-state value function
@@ -41,15 +71,33 @@ def epsilon_nn_greedy(board, dice, player, epsilon, w1, b1, w2, b2, debug = Fals
     for i in range(0, na):
         # encode the board to create the input
         x = Variable(torch.tensor(one_hot_encoding(possible_moves[i]), dtype = torch.float, device = device)).view(28*2*6,1)
+        p, h = actor_policy_forward(x, w1, b1, w2, b2)
+        #need this information for the backpropagation for policy gradient
+        xs.append(x)    #inputs
+        hs.append(h)    #hidden states
         # now do a forward pass to evaluate the board's after-state value
         h = torch.mm(w1,x) + b1 # matrix-multiply x with input weight w1 and add bias
         h_sigmoid = h.sigmoid() # squash this with a sigmoid function
         y = torch.mm(w2,h_sigmoid) + b2 # multiply with the output weights w2 and add bias
+        logProp.append(y - p)
         va[i] = y.sigmoid()
     return possible_moves[np.argmax(va)]
 
+def discount_reward(r):
+    global gamma
+    discounted_r = np.zeros_like(r)
+    running_add = 0
+    for t in reversed(range(0, r.size)):
+        if r[t] != 0: 
+            running_add = 0 #resetting sum
+        running_add = running_add * gamma + r[t]
+        discounted_r[t] = running_add
+        return discounted_r
+
 def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
     gamma = 1 # for completeness
+    global episode_number, xs, hs, logProp
+    
     # play numgames games for training
     for games in range(0, numgames):
         board = Backgammon.init_board()    # initialize the board (empty)
@@ -138,6 +186,35 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
             reward = 1
         else:
             reward = 0.5
+            
+        if(Backgammon.game_over(board)):
+            episode_number += 1
+            end_x = np.vstack(xs)
+            end_h = np.vstack(hs)
+            end_logProp = np.vstack(logProp)
+            epr = np.vstack(reward)
+            xs, hs, logProp = [], [], []
+            
+            discounted_epr = discount_reward(epr)
+            #standarize the discounted reward
+            
+            discounted_epr -= np.mean(discounted_epr)
+            discounted_epr /= np.std(discounted_epr)
+            end_logProp *= discounted_epr
+            
+            grad = actor_policy_backward(end_x, end_h, end_logProp, w2)
+            
+            for k in model: 
+                grad_buffer[k] += grad[k] #adding the grad to the batch
+                
+            if episode_number % batch_size == 0:
+                episode_number = 0
+                for k, v in model.items():
+                    g = grad_buffer[k]
+                    rmsprop_cache[k] = decay_rate * rmsprop_cache[k] + (1 - decay_rate ) * np.power(g, 2)
+                    model[k] += learning_rate * g/np.sqrt(rmsprop_cache[k] + 1e-5)
+                    grad_buffer[k] = np.zeros_like(v)
+            
         # Now we perform the final update (terminal after-state value is zero)
         # these are basically the same updates as in the inner loop but for the final-after-states (sold and xold)
         # first for the table (note if reward is 0 this player actually won!):

@@ -7,6 +7,7 @@ perceive the board as player 1
 """
 import numpy as np
 import neural_network_agent
+import torch
 
 def action(board_copy,dice,player,i):
     # the champion to be
