@@ -11,6 +11,7 @@ import torch
 from torch.autograd import Variable
 #import Backgammon
 
+device = torch.device('cpu')
 
 # this function is used to find an index to the after-state value table V(s)
 def hash_it(board_copy):
@@ -30,8 +31,8 @@ def one_hot_encoding(board):
 
 
 # this epsilon greedy policy uses a feed-forward neural network to approximate the after-state value function
-def epsilon_nn_greedy(board, dice, player, epsilon, w1, b1, w2, b2, debug = False):
-    possible_moves, possible_boards = Backgammon.legal_moves(board, dice, player)
+def epsilon_nn_greedy(board, dice, player, epsilon, w1, b1, w2, b2, possible_moves, possible_boards, debug = False):
+#    possible_moves, possible_boards = legal_moves(board, dice, player)
     if (np.random.uniform() < epsilon):
         if debug == True:
             print("explorative move")
@@ -74,7 +75,8 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
                 possible_moves, possible_boards = Backgammon.legal_moves(board, dice, player)
                 action = possible_moves[np.random.randint(len(possible_moves))]
             else: # this one is using the neural-network to approximate the after-state value
-                action = epsilon_nn_greedy(np.copy(board), dice, player, epsilon, w1, b1, w2, b2)
+                possible_moves, possible_boards = Backgammon.legal_moves(board, dice, player)
+                action = epsilon_nn_greedy(np.copy(board), dice, player, epsilon, w1, b1, w2, b2, possible_moves, possible_boards, False)
             # perform move and update board
             for i in range(0,len(action)):
                 board = Backgammon.update_board(board, action[i], player)
@@ -171,13 +173,14 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
         b1.data = b1.data + alpha1 * delta2 * Z_b1
         w2.data = w2.data + alpha2 * delta2 * Z_w2
         b2.data = b2.data + alpha2 * delta2 * Z_b2
-        
+
+"""
+     
 device = torch.device('cpu')
 # cuda will only create a significant speedup for large/deep networks and batched training
 # device = torch.device('cuda') 
 
 V = defaultdict(int) 
-print('V before', V)
 
 alpha = 0.01 # step size for tabular learning
 alpha1 = 0.01 # step sizes using for the neural network (first layer)
@@ -195,19 +198,21 @@ b2 = Variable(torch.zeros((1,1), device = device, dtype=torch.float), requires_g
 # now perform the actual training and display the computation time
 import time
 start = time.time()
-training_steps = 10000
+training_steps = 50000
 learnit(training_steps, epsilon, lam, alpha, V, alpha1, alpha2, w1, b2, w2, b2)
 end = time.time()
 print(end - start)
 
 torch.save(w1, './w1_trained.pth')
-torch.save(w1, './w2_trained.pth')
+torch.save(w2, './w2_trained.pth')
 torch.save(b1, './b1_trained.pth')
 torch.save(b2, './b2_trained.pth')
 print('w1 from file',torch.load('./w1_trained.pth', map_location=lambda storage, loc: storage))
 print('w2 from file',torch.load('./w2_trained.pth', map_location=lambda storage, loc: storage))
 print('b1 from file',torch.load('./b1_trained.pth', map_location=lambda storage, loc: storage))
 print('b2 from file',torch.load('./b2_trained.pth', map_location=lambda storage, loc: storage))
+
+"""
 
 
 def action(board_copy,dice,player,i):

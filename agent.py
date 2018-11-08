@@ -6,7 +6,9 @@ see flipped_agent for an example of how to flip the board in order to always
 perceive the board as player 1
 """
 import numpy as np
+import torch
 import neural_network_agent
+import Backgammon
 
 def action(board_copy,dice,player,i):
     # the champion to be
@@ -28,10 +30,11 @@ def action(board_copy,dice,player,i):
     #
     #
     #
+    epsilon = 0.1
     w1 = torch.load('./w1_trained.pth', map_location=lambda storage, loc: storage)
     w2 = torch.load('./w2_trained.pth', map_location=lambda storage, loc: storage)
     b1 = torch.load('./b1_trained.pth', map_location=lambda storage, loc: storage)
     b2 = torch.load('./b2_trained.pth', map_location=lambda storage, loc: storage)
-    move = neural_network_agent.epsilon_nn_greedy(np.copy(board), player, epsilon, w1, b1, w2, b2, debug)
+    move = neural_network_agent.epsilon_nn_greedy(board_copy, dice, player, epsilon, w1, b1, w2, b2, possible_moves, possible_boards, False)
 
     return move
