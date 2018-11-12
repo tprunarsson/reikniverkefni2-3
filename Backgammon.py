@@ -9,9 +9,9 @@ Feel free to change this file as you wish but you will only submit your agent
 so make sure your changes here won't affect his performance.
 """
 import numpy as np
-import agent
 import dyna2
-# import flipped_agent 
+#import agent
+#import flipped_agent 
 
 def init_board():
     # initializes the game board
@@ -253,7 +253,7 @@ def main():
     winners = {}; winners["1"]=0; winners["-1"]=0; # Collecting stats of the games
     nGames = 1000 # how many games?
     for g in range(nGames):
-        winner = play_a_game(commentary=True)
+        winner = play_a_game(commentary=False)
         winners[str(winner)] += 1
     print("Out of", nGames, "games,")
     print("player", 1, "won", winners["1"],"times and")

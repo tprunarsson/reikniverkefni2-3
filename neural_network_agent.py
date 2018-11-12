@@ -6,10 +6,12 @@ see flipped_agent for an example of how to flip the board in order to always
 perceive the board as player 1
 """
 import numpy as np
+import copy
 from collections import defaultdict
 import torch 
 from torch.autograd import Variable
-#import Backgammon
+import Backgammon
+import flipped_agent
 
 device = torch.device('cpu')
 
@@ -33,10 +35,12 @@ def one_hot_encoding(board):
 # this epsilon greedy policy uses a feed-forward neural network to approximate the after-state value function
 def epsilon_nn_greedy(board, dice, player, epsilon, w1, b1, w2, b2, possible_moves, possible_boards, debug = False):
 #    possible_moves, possible_boards = legal_moves(board, dice, player)
+    """
     if (np.random.uniform() < epsilon):
         if debug == True:
             print("explorative move")
         return possible_moves[np.random.randint(len(possible_moves))]
+    """
     na = len(possible_boards)
     va = np.zeros(na)
     for i in range(0, na):
@@ -72,8 +76,10 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
         for moveNumber in range(0, len(legal_moves)):
             # use a policy to find action
             if (player == tableplayer): # this one is using the table V
-                possible_moves, possible_boards = Backgammon.legal_moves(board, dice, player)
-                action = possible_moves[np.random.randint(len(possible_moves))]
+                possible_moves, possible_boards = Backgammon.legal_moves(flipped_agent.flip_board(np.copy(board)), dice, player)
+                #action = possible_moves[np.random.randint(len(possible_moves))]
+                action = epsilon_nn_greedy(flipped_agent.flip_board(np.copy(board)), dice, player, epsilon, w1, b1, w2, b2, possible_moves, possible_boards, False)
+                action = flipped_agent.flip_move(action)
             else: # this one is using the neural-network to approximate the after-state value
                 possible_moves, possible_boards = Backgammon.legal_moves(board, dice, player)
                 action = epsilon_nn_greedy(np.copy(board), dice, player, epsilon, w1, b1, w2, b2, possible_moves, possible_boards, False)
@@ -85,14 +91,15 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
                 break # bail out of inner game loop
             # once both player have performed at least one move we can start doing updates
             if (1 < moveNumber):
-                if tableplayer == player: # here we have player 1 updating the table V
-                    s = hash_it(board) # get index to table for this new board
+                if tableplayer == player: # here we have player -1 updating the table V
+                    board_copy = np.copy(board)
+                    s = hash_it(flipped_agent.flip_board(board_copy)) # get index to table for this new board
                     delta = 0 + gamma * V[s] - V[sold]
                     E = np.append(E,1) # add trace to this state (note all new states are unique else we would +1)
                     S.append(sold)     # keep track of this state also
                     V[S] = V[S] + delta * alpha * E # the usual tabular TD(lambda) update
                     E = gamma * lam * E
-                else: # here we have player 2 updating the neural-network (2 layer feed forward with Sigmoid units)
+                else: # here we have player 1 updating the neural-network (2 layer feed forward with Sigmoid units)
                     x = Variable(torch.tensor(one_hot_encoding(board, player), dtype = torch.float, device = device)).view(2*9,1)
                     # now do a forward pass to evaluate the new board's after-state value
                     h = torch.mm(w1,x) + b1 # matrix-multiply x with input weight w1 and add bias
@@ -174,11 +181,13 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
         w2.data = w2.data + alpha2 * delta2 * Z_w2
         b2.data = b2.data + alpha2 * delta2 * Z_b2
 
-"""
+
      
 device = torch.device('cpu')
 # cuda will only create a significant speedup for large/deep networks and batched training
 # device = torch.device('cuda') 
+
+
 
 V = defaultdict(int) 
 
@@ -212,7 +221,7 @@ print('w2 from file',torch.load('./w2_trained.pth', map_location=lambda storage,
 print('b1 from file',torch.load('./b1_trained.pth', map_location=lambda storage, loc: storage))
 print('b2 from file',torch.load('./b2_trained.pth', map_location=lambda storage, loc: storage))
 
-"""
+
 
 
 def action(board_copy,dice,player,i):
