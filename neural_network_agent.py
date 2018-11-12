@@ -10,8 +10,8 @@ import copy
 from collections import defaultdict
 import torch 
 from torch.autograd import Variable
-import Backgammon
-import flipped_agent
+#import Backgammon
+#import flipped_agent
 
 device = torch.device('cpu')
 
@@ -181,14 +181,13 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
         w2.data = w2.data + alpha2 * delta2 * Z_w2
         b2.data = b2.data + alpha2 * delta2 * Z_b2
 
-
      
 device = torch.device('cpu')
 # cuda will only create a significant speedup for large/deep networks and batched training
 # device = torch.device('cuda') 
 
 
-
+"""
 V = defaultdict(int) 
 
 alpha = 0.01 # step size for tabular learning
@@ -220,7 +219,7 @@ print('w1 from file',torch.load('./w1_trained.pth', map_location=lambda storage,
 print('w2 from file',torch.load('./w2_trained.pth', map_location=lambda storage, loc: storage))
 print('b1 from file',torch.load('./b1_trained.pth', map_location=lambda storage, loc: storage))
 print('b2 from file',torch.load('./b2_trained.pth', map_location=lambda storage, loc: storage))
-
+"""
 
 
 

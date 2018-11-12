@@ -10,8 +10,8 @@ so make sure your changes here won't affect his performance.
 """
 import numpy as np
 import dyna2
-#import agent
-#import flipped_agent 
+import agent
+import flipped_agent 
 
 def init_board():
     # initializes the game board
