@@ -21,6 +21,7 @@ def hash_it(board_copy):
     return int(base31)
 
 def one_hot_encoding(board):
+    print('board', board)
     oneHot = np.zeros(28*6*2)
     for i in range(1, 7):
         if i < 6:
@@ -29,6 +30,7 @@ def one_hot_encoding(board):
         else:
             oneHot[28 * (i-1) + (np.where( board > i)[0] )-1] = 1
             oneHot[28*6 + 28 * (i-1) + (np.where( board < -i)[0] )-1] = 1
+    print('onehot', oneHot)
     return oneHot
 
 
@@ -45,7 +47,7 @@ def epsilon_nn_greedy(board, dice, player, epsilon, w1, b1, w2, b2, possible_mov
     va = np.zeros(na)
     for i in range(0, na):
         # encode the board to create the input
-        x = Variable(torch.tensor(one_hot_encoding(possible_moves[i]), dtype = torch.float, device = device)).view(28*2*6,1)
+        x = Variable(torch.tensor(one_hot_encoding(possible_boards[i]), dtype = torch.float, device = device)).view(28*2*6,1)
         # now do a forward pass to evaluate the board's after-state value
         h = torch.mm(w1,x) + b1 # matrix-multiply x with input weight w1 and add bias
         h_sigmoid = h.sigmoid() # squash this with a sigmoid function
