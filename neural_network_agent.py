@@ -121,7 +121,7 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
                 # using autograd and the contructed computational graph in pytorch compute all gradients
                 y_sigmoid.backward()
                 # update the eligibility traces using the gradients
-                Z_w1 = gamma * lam * Z_w1 + w2.grad.data
+                Z_w1 = gamma * lam * Z_w1 + w1.grad.data
                 Z_b1 = gamma * lam * Z_b1 + b1.grad.data
                 Z_w2 = gamma * lam * Z_w2 + w2.grad.data
                 Z_b2 = gamma * lam * Z_b2 + b2.grad.data
