@@ -10,8 +10,8 @@ so make sure your changes here won't affect his performance.
 """
 import numpy as np
 import dyna2
-#import agent
-#import flipped_agent 
+import agent
+import flipped_agent 
 
 def init_board():
     # initializes the game board
@@ -230,6 +230,7 @@ def play_a_game(commentary = False):
             # if you're playing using dyna2 vs random agent: 
             if player == 1:
                 move = agent.action(board_copy,dice,player,i)
+
             elif player == -1:
                 move = random_agent(board_copy,dice,player,i) 
             

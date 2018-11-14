@@ -10,8 +10,8 @@ import copy
 from collections import defaultdict
 import torch 
 from torch.autograd import Variable
-import Backgammon
-import flipped_agent
+#import Backgammon
+#import flipped_agent
 
 device = torch.device('cpu')
 
@@ -55,7 +55,7 @@ def epsilon_nn_greedy(board, dice, player, epsilon, w1, b1, w2, b2, possible_mov
         return []
     return possible_moves[np.argmax(va)]
 
-def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
+def learnit(numgames, epsilon, lam, alpha, alpha1, alpha2, w1, b1, w2, b2):
     gamma = 1 # for completeness
     # play numgames games for training
     for games in range(0, numgames):
@@ -212,6 +212,7 @@ device = torch.device('cpu')
 # cuda will only create a significant speedup for large/deep networks and batched training
 # device = torch.device('cuda') 
 
+"""
 alpha = 0.01 # step size for tabular learning
 alpha1 = 0.01 # step sizes using for the neural network (first layer)
 alpha2 = 0.01 # (second layer)
@@ -220,16 +221,16 @@ lam = 0.4 # lambda parameter in TD(lam-bda)
 
 # define the parameters for the single hidden layer feed forward neural network
 # randomly initialized weights with zeros for the biases
-w1 = Variable(torch.randn(80,28*2*6, device = device, dtype=torch.float), requires_grad = True)
-b1 = Variable(torch.zeros((80,1), device = device, dtype=torch.float), requires_grad = True)
-w2 = Variable(torch.randn(1,80, device = device, dtype=torch.float), requires_grad = True)
+w1 = Variable(torch.randn(28*28,28*2*6, device = device, dtype=torch.float), requires_grad = True)
+b1 = Variable(torch.zeros((28*28,1), device = device, dtype=torch.float), requires_grad = True)
+w2 = Variable(torch.randn(1,28*28, device = device, dtype=torch.float), requires_grad = True)
 b2 = Variable(torch.zeros((1,1), device = device, dtype=torch.float), requires_grad = True)
 
 # now perform the actual training and display the computation time
 import time
 start = time.time()
 training_steps = 50000
-learnit(training_steps, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2)
+learnit(training_steps, epsilon, lam, alpha, alpha1, alpha2, w1, b1, w2, b2)
 end = time.time()
 print(end - start)
 
@@ -241,7 +242,7 @@ print('w1 from file',torch.load('./w1_trained.pth', map_location=lambda storage,
 print('w2 from file',torch.load('./w2_trained.pth', map_location=lambda storage, loc: storage))
 print('b1 from file',torch.load('./b1_trained.pth', map_location=lambda storage, loc: storage))
 print('b2 from file',torch.load('./b2_trained.pth', map_location=lambda storage, loc: storage))
-
+"""
 
 def action(board_copy,dice,player,i):
     # the champion to be
