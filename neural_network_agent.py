@@ -51,6 +51,8 @@ def epsilon_nn_greedy(board, dice, player, epsilon, w1, b1, w2, b2, possible_mov
         h_sigmoid = h.sigmoid() # squash this with a sigmoid function
         y = torch.mm(w2,h_sigmoid) + b2 # multiply with the output weights w2 and add bias
         va[i] = y.sigmoid()
+    if(na==0):
+        return []
     return possible_moves[np.argmax(va)]
 
 def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
@@ -67,21 +69,17 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
         player = 1
         otherplayer = -1
         winner = 0 # this implies a draw
-        dice = Backgammon.roll_dice()
-        legal_moves = Backgammon.legal_moves(board, dice, player)
-        for moveNumber in range(0, len(legal_moves)):
+        isGameOver = False
+        moveNumber = 0
+        while (isGameOver == False):
+            dice = Backgammon.roll_dice()
             # use a policy to find action
-            if (player == otherplayer): # this one is using the table V
+            # both are using the neural-network to approximate the after-state value
+            if (player == otherplayer): # this one flippes the board to find an action.
                 possible_moves, possible_boards = Backgammon.legal_moves(flipped_agent.flip_board(np.copy(board)), dice, -player)
                 action = epsilon_nn_greedy(flipped_agent.flip_board(np.copy(board)), dice, -player, epsilon, w1, b1, w2, b2,  possible_moves, possible_boards, False)
                 action = flipped_agent.flip_move(action)
-                #possible_moves_flipped = [flipped_agent.flip_move(move) for move in possible_moves]
-                #possible_boards_flipped = [flipped_agent.flip_board(board) for board in possible_boards]
-                #action = epsilon_nn_greedy(flipped_agent.flip_board(np.copy(board)), dice, -player, epsilon, w1, b1, w2, b2,  possible_moves_flipped, possible_boards_flipped, False)
-
-                #action = possible_moves[np.random.randint(len(possible_moves))]
-                #action = epsilon_nn_greedy(np.copy(board), dice, player, epsilon, w1, b1, w2, b2,  possible_moves, possible_boards, False)
-            else: # this one is using the neural-network to approximate the after-state value
+            else: # this one uses the original board.
                 possible_moves, possible_boards = Backgammon.legal_moves(board, dice, player)
                 action = epsilon_nn_greedy(np.copy(board), dice, player, epsilon, w1, b1, w2, b2, possible_moves, possible_boards, False)
             # perform move and update board
@@ -89,6 +87,7 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
                 board = Backgammon.update_board(board, action[i], player)
             if (1 == Backgammon.game_over(board)): # has this player won?
                 winner = player
+                isGameOver = True
                 break # bail out of inner game loop
             # once both player have performed at least one move we can start doing updates
             if (1 < moveNumber):
@@ -145,6 +144,7 @@ def learnit(numgames, epsilon, lam, alpha, V, alpha1, alpha2, w1, b1, w2, b2):
                 xold = Variable(torch.tensor(one_hot_encoding(board), dtype=torch.float, device = device)).view(28*2*6,1)
             # swap players
             player = -player
+            moveNumber = moveNumber + 1
 
         # The game epsiode has ended and we know the outcome of the game, and can find the terminal rewards
         if winner == otherplayer:
@@ -220,9 +220,9 @@ lam = 0.4 # lambda parameter in TD(lam-bda)
 
 # define the parameters for the single hidden layer feed forward neural network
 # randomly initialized weights with zeros for the biases
-w1 = Variable(torch.randn(28*28,28*2*6, device = device, dtype=torch.float), requires_grad = True)
-b1 = Variable(torch.zeros((28*28,1), device = device, dtype=torch.float), requires_grad = True)
-w2 = Variable(torch.randn(1,28*28, device = device, dtype=torch.float), requires_grad = True)
+w1 = Variable(torch.randn(80,28*2*6, device = device, dtype=torch.float), requires_grad = True)
+b1 = Variable(torch.zeros((80,1), device = device, dtype=torch.float), requires_grad = True)
+w2 = Variable(torch.randn(1,80, device = device, dtype=torch.float), requires_grad = True)
 b2 = Variable(torch.zeros((1,1), device = device, dtype=torch.float), requires_grad = True)
 
 # now perform the actual training and display the computation time
