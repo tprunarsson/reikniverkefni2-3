@@ -15,11 +15,6 @@ import flipped_agent
 
 device = torch.device('cpu')
 
-# this function is used to find an index to the after-state value table V(s)
-def hash_it(board_copy):
-    base31 = np.matmul(np.power(31, range(0, 29)), board_copy.transpose())
-    return int(base31)
-
 def one_hot_encoding(board):
     oneHot = np.zeros(28*6*2)
     for i in range(1, 7):
