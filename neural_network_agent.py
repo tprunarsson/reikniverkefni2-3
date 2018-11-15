@@ -10,8 +10,8 @@ import copy
 from collections import defaultdict
 import torch 
 from torch.autograd import Variable
-#import Backgammon
-#import flipped_agent
+import Backgammon
+import flipped_agent
 
 device = torch.device('cpu')
 
@@ -21,7 +21,6 @@ def hash_it(board_copy):
     return int(base31)
 
 def one_hot_encoding(board):
-    print('board', board)
     oneHot = np.zeros(28*6*2)
     for i in range(1, 7):
         if i < 6:
@@ -30,7 +29,6 @@ def one_hot_encoding(board):
         else:
             oneHot[28 * (i-1) + (np.where( board > i)[0] )-1] = 1
             oneHot[28*6 + 28 * (i-1) + (np.where( board < -i)[0] )-1] = 1
-    print('onehot', oneHot)
     return oneHot
 
 
@@ -214,7 +212,7 @@ device = torch.device('cpu')
 # cuda will only create a significant speedup for large/deep networks and batched training
 # device = torch.device('cuda') 
 
-"""
+
 alpha = 0.01 # step size for tabular learning
 alpha1 = 0.01 # step sizes using for the neural network (first layer)
 alpha2 = 0.01 # (second layer)
@@ -244,7 +242,7 @@ print('w1 from file',torch.load('./w1_trained.pth', map_location=lambda storage,
 print('w2 from file',torch.load('./w2_trained.pth', map_location=lambda storage, loc: storage))
 print('b1 from file',torch.load('./b1_trained.pth', map_location=lambda storage, loc: storage))
 print('b2 from file',torch.load('./b2_trained.pth', map_location=lambda storage, loc: storage))
-"""
+
 
 def action(board_copy,dice,player,i):
     # the champion to be
