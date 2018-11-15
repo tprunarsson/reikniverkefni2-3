@@ -150,57 +150,56 @@ def learnit(numgames, epsilon, lam, alpha, alpha1, alpha2, w1, b1, w2, b2):
             reward = 0.5
         # Now we perform the final update (terminal after-state value is zero)
         # these are basically the same updates as in the inner loop but for the final-after-states (xold and xold_flipped)
-        # first for the table (note if reward is 0 this player actually won!):
-        if(player == otherplayer):
-            # and then for the neural network:
-            h = torch.mm(w1,xold_flipped) + b1 # matrix-multiply x with input weight w1 and add bias
-            h_sigmoid = h.sigmoid() # squash this with a sigmoid function
-            y = torch.mm(w2,h_sigmoid) + b2 # multiply with the output weights w2 and add bias
-            y_sigmoid = y.sigmoid() # squash the output
-            delta = (1.0 - reward) + gamma * 0 - y_sigmoid.detach().cpu().numpy()
-            # using autograd and the contructed computational graph in pytorch compute all gradients
-            y_sigmoid.backward()
-            # update the eligibility traces
-            Z_w1 = gamma * lam * Z_w1 + w1.grad.data
-            Z_b1 = gamma * lam * Z_b1 + b1.grad.data
-            Z_w2 = gamma * lam * Z_w2 + w2.grad.data
-            Z_b2 = gamma * lam * Z_b2 + b2.grad.data
-            # zero the gradients
-            w1.grad.data.zero_()
-            b1.grad.data.zero_()
-            w2.grad.data.zero_()
-            b2.grad.data.zero_()
-            # perform now the update of weights
-            delta =  torch.tensor(delta, dtype = torch.float, device = device)
-            w1.data = w1.data + alpha1 * delta * Z_w1
-            b1.data = b1.data + alpha1 * delta * Z_b1
-            w2.data = w2.data + alpha2 * delta * Z_w2
-            b2.data = b2.data + alpha2 * delta * Z_b2
-        else:
-            # and then for the neural network:
-            h = torch.mm(w1,xold) + b1 # matrix-multiply x with input weight w1 and add bias
-            h_sigmoid = h.sigmoid() # squash this with a sigmoid function
-            y = torch.mm(w2,h_sigmoid) + b2 # multiply with the output weights w2 and add bias
-            y_sigmoid = y.sigmoid() # squash the output
-            delta2 = reward + gamma * 0 - y_sigmoid.detach().cpu().numpy()  # this is the usual TD error
-            # using autograd and the contructed computational graph in pytorch compute all gradients
-            y_sigmoid.backward()
-            # update the eligibility traces
-            Z_w1 = gamma * lam * Z_w1 + w1.grad.data
-            Z_b1 = gamma * lam * Z_b1 + b1.grad.data
-            Z_w2 = gamma * lam * Z_w2 + w2.grad.data
-            Z_b2 = gamma * lam * Z_b2 + b2.grad.data
-            # zero the gradients
-            w1.grad.data.zero_()
-            b1.grad.data.zero_()
-            w2.grad.data.zero_()
-            b2.grad.data.zero_()
-            # perform now the update of weights
-            delta2 =  torch.tensor(delta2, dtype = torch.float, device = device)
-            w1.data = w1.data + alpha1 * delta2 * Z_w1
-            b1.data = b1.data + alpha1 * delta2 * Z_b1
-            w2.data = w2.data + alpha2 * delta2 * Z_w2
-            b2.data = b2.data + alpha2 * delta2 * Z_b2
+        
+        # Fist we update the values for player -1
+        h = torch.mm(w1,xold_flipped) + b1 # matrix-multiply x with input weight w1 and add bias
+        h_sigmoid = h.sigmoid() # squash this with a sigmoid function
+        y = torch.mm(w2,h_sigmoid) + b2 # multiply with the output weights w2 and add bias
+        y_sigmoid = y.sigmoid() # squash the output
+        delta = (1.0 - reward) + gamma * 0 - y_sigmoid.detach().cpu().numpy()
+        # using autograd and the contructed computational graph in pytorch compute all gradients
+        y_sigmoid.backward()
+        # update the eligibility traces
+        Z_w1 = gamma * lam * Z_w1 + w1.grad.data
+        Z_b1 = gamma * lam * Z_b1 + b1.grad.data
+        Z_w2 = gamma * lam * Z_w2 + w2.grad.data
+        Z_b2 = gamma * lam * Z_b2 + b2.grad.data
+        # zero the gradients
+        w1.grad.data.zero_()
+        b1.grad.data.zero_()
+        w2.grad.data.zero_()
+        b2.grad.data.zero_()
+        # perform now the update of weights
+        delta =  torch.tensor(delta, dtype = torch.float, device = device)
+        w1.data = w1.data + alpha1 * delta * Z_w1
+        b1.data = b1.data + alpha1 * delta * Z_b1
+        w2.data = w2.data + alpha2 * delta * Z_w2
+        b2.data = b2.data + alpha2 * delta * Z_b2
+        
+        # Then we update the values for player 1
+        h = torch.mm(w1,xold) + b1 # matrix-multiply x with input weight w1 and add bias
+        h_sigmoid = h.sigmoid() # squash this with a sigmoid function
+        y = torch.mm(w2,h_sigmoid) + b2 # multiply with the output weights w2 and add bias
+        y_sigmoid = y.sigmoid() # squash the output
+        delta2 = reward + gamma * 0 - y_sigmoid.detach().cpu().numpy()  # this is the usual TD error
+        # using autograd and the contructed computational graph in pytorch compute all gradients
+        y_sigmoid.backward()
+        # update the eligibility traces
+        Z_w1 = gamma * lam * Z_w1 + w1.grad.data
+        Z_b1 = gamma * lam * Z_b1 + b1.grad.data
+        Z_w2 = gamma * lam * Z_w2 + w2.grad.data
+        Z_b2 = gamma * lam * Z_b2 + b2.grad.data
+        # zero the gradients
+        w1.grad.data.zero_()
+        b1.grad.data.zero_()
+        w2.grad.data.zero_()
+        b2.grad.data.zero_()
+        # perform now the update of weights
+        delta2 =  torch.tensor(delta2, dtype = torch.float, device = device)
+        w1.data = w1.data + alpha1 * delta2 * Z_w1
+        b1.data = b1.data + alpha1 * delta2 * Z_b1
+        w2.data = w2.data + alpha2 * delta2 * Z_w2
+        b2.data = b2.data + alpha2 * delta2 * Z_b2
 
      
 device = torch.device('cpu')
